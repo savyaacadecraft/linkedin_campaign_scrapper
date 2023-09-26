@@ -3,9 +3,10 @@ from pydantic import BaseModel
 from uvicorn import run
 
 from pymongo import MongoClient
+from urllib.parse import quote_plus
 from bson import ObjectId
-from threading import Thread, Lock
 
+from threading import Thread, Lock
 
 from validate_email_own import PatternCheck
 
@@ -15,9 +16,21 @@ app = FastAPI()
 EMAIL_LIST = None
 LIST_LOCK = None
 
-CLIENT = MongoClient("mongodb://localhost:27017")
+username = "manojtomar326"
+password = "Tomar@@##123"
+cluster_url = "cluster0.ldghyxl.mongodb.net"
+
+# Encode the username and password using quote_plus()
+encoded_username = quote_plus(username)
+encoded_password = quote_plus(password)
+
+# Create the MongoDB Atlas connection string with the encoded credentials
+connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{cluster_url}/test?retryWrites=true&w=majority"
+
+# Connect to MongoDB Atlas
+CLIENT = MongoClient(connection_string)
 DB = CLIENT["LinkedIn_Scrapper"]
-COLLECTION = DB["Temp"]
+COLLECTION = DB["New"]
 
 class emp_details(BaseModel):
     first_name:str
@@ -89,7 +102,7 @@ async def push_to_email_queue(details: emp_details):
 
 @app.get("/get_all_data")
 async def get_url_data(URL: str):
-    
+
     pass
 
 if __name__ == "__main__":

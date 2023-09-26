@@ -1,0 +1,1 @@
+python3 email_server.py > Logs.txt 2> Error.txt & echo $! > process.txt
