@@ -41,6 +41,18 @@ def name_filter(input_string):
     
     return ' '.join(result.split()) 
 
+def domain_filter(string):
+    if "http://" in string:
+        string = string.replace("http://", "")
+    
+    if "https://" in string:
+        string = string.replace("https://", "")
+        
+    if "/" in string:
+        string = string[:string.index("/")]
+    
+    return string
+
 def login(engine):
     username: str = "shubhamtomar033@gmail.com"
     password: str = "Acadecraft@12"
@@ -167,6 +179,7 @@ def get_industry_and_head_count(engine, Company_URL):
     try:
         website = engine.find_element(By.CLASS_NAME, "org-top-card-primary-actions__inner")
         site = website.find_element(By.TAG_NAME, "a").get_attribute("href")
+        site = domain_filter(site)
         sleep(0.5)
     except Exception as E:
         print("website not found: ", Company_URL)
@@ -185,7 +198,7 @@ def request_to_email_finder(first_name, last_name, domain, mongo_id):
         "mongo_id": str(mongo_id)
         }
 
-    url = "http://0.0.0.0:9000/send_employee_details"
+    url = "http://3.108.35.111:9898/send_employee_details"
     try:
         requests.post(url= url, json=request_body)
     except Exception as E:

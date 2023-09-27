@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from uvicorn import run
 
@@ -16,18 +17,17 @@ app = FastAPI()
 EMAIL_LIST = None
 LIST_LOCK = None
 
-username = "manojtomar326"
-password = "Tomar@@##123"
-cluster_url = "cluster0.ldghyxl.mongodb.net"
 
-# Encode the username and password using quote_plus()
-encoded_username = quote_plus(username)
-encoded_password = quote_plus(password)
+# username = "manojtomar326"
+# password = "Tomar@@##123"
+# cluster_url = "cluster0.ldghyxl.mongodb.net"
 
-# Create the MongoDB Atlas connection string with the encoded credentials
-connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{cluster_url}/test?retryWrites=true&w=majority"
+# encoded_username = quote_plus(username)
+# encoded_password = quote_plus(password)
 
-# Connect to MongoDB Atlas
+# connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{cluster_url}/test?retryWrites=true&w=majority"
+
+connection_string = "mongodb://localhost:27017/"
 CLIENT = MongoClient(connection_string)
 DB = CLIENT["LinkedIn_Scrapper"]
 COLLECTION = DB["New"]
@@ -82,6 +82,8 @@ def email_operation():
             else:
                 COLLECTION.update_one({"_id": ObjectId(document_id)}, {"$set": {"email": False, "email_source": "email_finder"}})
 
+        else:
+            sleep(60)
 
 @app.post("/send_employee_details")
 async def push_to_email_queue(details: emp_details):
@@ -103,13 +105,26 @@ async def push_to_email_queue(details: emp_details):
 @app.get("/get_all_data")
 async def get_url_data(URL: str):
 
-    pass
+    print("URL: ", URL)
+    data = COLLECTION.find({"search_url": "https://www.linkedin.com/sales/"+URL}, {"_id": 0, "f_name":1, "l_name":1, "designation":1, "email":1,"location":1, "company_name":1, "company_head_count":1, "industry": 1, "company_url":1})
+    cols = ["first_name", "last_name", "designation", "email", "location", "company_name", "head_count", "industry", "company_url"]
+    print(", ".join(cols), file=open("Data.csv", "w"))
+    
+
+    for i in data:
+        print(i["f_name"], i["l_name"], i["designation"], i["email"], i["location"], i["company_name"], i["company_head_count"], i["industry"], i["company_url"], sep=", ",  file=open("Data.csv", "a"))
+
+
+    
+    # return FileResponse("Data.csv", filename="Data.csv")
+    return {"response": "Data ready "}
+    
 
 if __name__ == "__main__":
     EMAIL_LIST = list()
     LIST_LOCK = Lock()
 
 
-    Thread(target=email_operation).start()
+    # Thread(target=email_operation).start()
 
-    run(app, host="0.0.0.0", port=9000)
+    run(app, host="0.0.0.0", port=9090)
