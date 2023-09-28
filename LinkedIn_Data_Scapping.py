@@ -177,10 +177,11 @@ def get_industry_and_head_count(engine, Company_URL):
         print("Industry Not Found")
         
     try:
-        website = engine.find_element(By.CLASS_NAME, "org-top-card-primary-actions__inner")
-        site = website.find_element(By.TAG_NAME, "a").get_attribute("href")
-        site = domain_filter(site)
+        website_text = engine.find_element(By.XPATH, "//dt[text() = 'Website']")
         sleep(0.5)
+
+        website = website_text.find_element(By.XPATH, 'following-sibling::*[1]').text
+        site = domain_filter(website)
     except Exception as E:
         print("website not found: ", Company_URL)
         site = ""

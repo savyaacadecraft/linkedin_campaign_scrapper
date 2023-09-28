@@ -18,16 +18,16 @@ EMAIL_LIST = None
 LIST_LOCK = None
 
 
-# username = "manojtomar326"
-# password = "Tomar@@##123"
-# cluster_url = "cluster0.ldghyxl.mongodb.net"
+username = "manojtomar326"
+password = "Tomar@@##123"
+cluster_url = "cluster0.ldghyxl.mongodb.net"
 
-# encoded_username = quote_plus(username)
-# encoded_password = quote_plus(password)
+encoded_username = quote_plus(username)
+encoded_password = quote_plus(password)
 
-# connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{cluster_url}/test?retryWrites=true&w=majority"
+connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{cluster_url}/test?retryWrites=true&w=majority"
 
-connection_string = "mongodb://localhost:27017/"
+# connection_string = "mongodb://localhost:27017/"
 CLIENT = MongoClient(connection_string)
 DB = CLIENT["LinkedIn_Scrapper"]
 COLLECTION = DB["New"]
@@ -105,8 +105,7 @@ async def push_to_email_queue(details: emp_details):
 @app.get("/get_all_data")
 async def get_url_data(URL: str):
 
-    print("URL: ", URL)
-    data = COLLECTION.find({"search_url": "https://www.linkedin.com/sales/"+URL}, {"_id": 0, "f_name":1, "l_name":1, "designation":1, "email":1,"location":1, "company_name":1, "company_head_count":1, "industry": 1, "company_url":1})
+    data = COLLECTION.find({"$text": {"$search": URL}}, {"_id": 0, "f_name":1, "l_name":1, "designation":1, "email":1,"location":1, "company_name":1, "company_head_count":1, "industry": 1, "company_url":1})
     cols = ["first_name", "last_name", "designation", "email", "location", "company_name", "head_count", "industry", "company_url"]
     print(", ".join(cols), file=open("Data.csv", "w"))
     
@@ -114,10 +113,8 @@ async def get_url_data(URL: str):
     for i in data:
         print(i["f_name"], i["l_name"], i["designation"], i["email"], i["location"], i["company_name"], i["company_head_count"], i["industry"], i["company_url"], sep=", ",  file=open("Data.csv", "a"))
 
-
     
-    # return FileResponse("Data.csv", filename="Data.csv")
-    return {"response": "Data ready "}
+    return FileResponse("Data.csv", filename="Data.csv")
     
 
 if __name__ == "__main__":
