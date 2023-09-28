@@ -17,7 +17,6 @@ import requests
 import re
 
 
-
 username = "manojtomar326"
 password = "Tomar@@##123"
 cluster_url = "cluster0.ldghyxl.mongodb.net"
@@ -34,41 +33,86 @@ CLIENT = MongoClient(connection_string)
 DB = CLIENT["LinkedIn_Scrapper"]
 COLLECTION = DB["New"]
 
+MAX_PROFILE_COUNT = 700
+LINKEDIN_ID_LIST = []
+
+
+def get_login_credentials():
+    global LINKEDIN_ID_LIST
+
+    with open("linkedin_login_credentials.csv", "r") as file:
+        for line in file:
+            line_data = tuple((line.split("\n")[0]).split(", "))
+            LINKEDIN_ID_LIST.append(line_data)
+
+
 def name_filter(input_string):
     pattern = r'\[[^\]]*\]|\([^)]*\)|[^a-zA-Z ]+'
-    
+
     result = re.sub(pattern, '', input_string)
-    
-    return ' '.join(result.split()) 
+
+    return ' '.join(result.split())
+
 
 def domain_filter(string):
     if "http://" in string:
         string = string.replace("http://", "")
-    
+
     if "https://" in string:
         string = string.replace("https://", "")
-        
+
     if "/" in string:
         string = string[:string.index("/")]
-    
+
     return string
 
+
+def next_page_url(url):
+    print("Next page URL created.....")
+
+    prev = (url.split("&query=")[0]).split("page=")[1]
+
+    next_page_num = str(int(prev) + 1)
+    return url.replace("page="+prev, "page="+next_page_num)
+    
+
 def login(engine):
-    username: str = "shubhamtomar033@gmail.com"
-    password: str = "Acadecraft@12"
+    global LINKEDIN_ID_LIST
 
-    engine.get("https://www.linkedin.com/?sign_in")
-    sleep(5)
+    if len(LINKEDIN_ID_LIST):
+        user = LINKEDIN_ID_LIST.pop()
 
-    engine.find_element(By.ID, "session_key").send_keys(username)
-    sleep(1)
+        engine.get("https://www.linkedin.com/?sign_in")
+        sleep(5)
 
-    engine.find_element(By.ID, "session_password").send_keys(password)
-    sleep(1)
+        engine.find_element(By.ID, "session_key").send_keys(user[0])
+        sleep(1)
 
-    engine.find_element(By.XPATH, '//button[@type="submit"]').click()
-    sleep(5)
-    input("Enter: ")
+        engine.find_element(By.ID, "session_password").send_keys(user[1])
+        sleep(1)
+
+        engine.find_element(By.XPATH, '//button[@type="submit"]').click()
+        sleep(5)
+    else:
+        print("Ran out of LinkedIn ID's")
+
+
+def logout(engine):
+    print("Logout Process Started.....")
+    try:
+        engine.find_element(By.XPATH, "//button[@data-control-name='view_user_menu_from_app_header']").click()
+        sleep(2)
+    except Exception as E:
+        print("Exception Occoured when Clicking the Profile Icon")
+    
+    try:
+        engine.find_element(By.XPATH, "//a[@data-control-name='view_logout_from_app_header']").click()
+        sleep(5)
+    except Exception as E:
+        print("Exception Occoured when clicking on Logout Text from the Drop down")
+
+    print("Logout Process Ended .......")
+
 
 def apollo_code(engine, url):
 
@@ -81,32 +125,34 @@ def apollo_code(engine, url):
     except Exception as E:
         print("Inside Apollo:")
 
-
     sleep(randint(0, 3))
 
     try:
-        WebDriverWait(engine, 2).until(EC.visibility_of_element_located((By.XPATH, "//a[contains(text(), 'Sign in')]")))
+        WebDriverWait(engine, 2).until(EC.visibility_of_element_located(
+            (By.XPATH, "//a[contains(text(), 'Sign in')]")))
         print(datetime.now(), file=open("BLOCK_COUNTER.txt", "a"))
         # engine.save_screenshot(f'{datetime.now().strftime("%Y-%m-%dT%H:%M:%S.png")}')
         engine.close()
         engine.switch_to.window(engine.window_handles[0])
-        
-    
+
     except:
         # Searching for the Apollo Box for Checking
         try:
-            WebDriverWait(engine, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, "apollo-opener-icon"))).click()
+            WebDriverWait(engine, 10).until(EC.element_to_be_clickable(
+                (By.CLASS_NAME, "apollo-opener-icon"))).click()
         except Exception as E:
             print("Element not appeared by 10 Seconds Error.....")
 
         # Clicking on the View email address Textarea
         try:
-            WebDriverWait(engine, 10).until(EC.element_to_be_clickable((By.XPATH, "//span[contains(text(), 'View email address')]"))).click()
+            WebDriverWait(engine, 10).until(EC.element_to_be_clickable(
+                (By.XPATH, "//span[contains(text(), 'View email address')]"))).click()
         except Exception as E:
             print("Clickable Text for Display Email was not found....")
 
         try:
-            email = WebDriverWait(engine, 2).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div[13]/div/div[2]/div/div/div[4]/div/div[1]/div[1]/div[3]/div[1]/div/div[1]/div/div[2]/div/div/span/div"))).text
+            email = WebDriverWait(engine, 2).until(EC.visibility_of_element_located(
+                (By.XPATH, "/html/body/div[13]/div/div[2]/div/div/div[4]/div/div[1]/div[1]/div[3]/div[1]/div/div[1]/div/div[2]/div/div/span/div"))).text
             if email != "Verifying":
 
                 # print(name, url, email, sep=",", file=open("Apollo_Email.csv", "a"))
@@ -115,7 +161,7 @@ def apollo_code(engine, url):
                 engine.switch_to.window(engine.window_handles[0])
 
                 return email
-                
+
             else:
                 email = "Not Found"
                 # print(name, url, email, sep=",", file=open("Apollo_Email.csv", "a"))
@@ -124,7 +170,6 @@ def apollo_code(engine, url):
                 engine.switch_to.window(engine.window_handles[0])
 
                 return email
-                
 
         except Exception as E:
             email = "Not Found"
@@ -135,8 +180,8 @@ def apollo_code(engine, url):
 
             return email
 
-def get_industry_and_head_count(engine, Company_URL):
 
+def get_industry_and_head_count(engine, Company_URL):
 
     try:
         sleep(1.5)
@@ -157,7 +202,8 @@ def get_industry_and_head_count(engine, Company_URL):
         return ("", "", "")
 
     try:
-        head_count = engine.find_element(By.CLASS_NAME, "link-without-hover-state").text
+        head_count = engine.find_element(
+            By.CLASS_NAME, "link-without-hover-state").text
         head_count = head_count.replace(" employees", "").replace(",", "")
     except Exception as E:
         head_count = ""
@@ -165,22 +211,26 @@ def get_industry_and_head_count(engine, Company_URL):
         print("Head Count Not Found")
 
     try:
-        industry_text = engine.find_element(By.XPATH, "//dt[text() = 'Industry']")
+        industry_text = engine.find_element(
+            By.XPATH, "//dt[text() = 'Industry']")
         sleep(0.5)
 
-        industry_name = industry_text.find_element(By.XPATH, 'following-sibling::*[1]').text
+        industry_name = industry_text.find_element(
+            By.XPATH, 'following-sibling::*[1]').text
         industry_name = industry_name.replace(",", " ")
-            
+
     except Exception as E:
         industry_name = ""
         print(Company_URL)
         print("Industry Not Found")
-        
+
     try:
-        website_text = engine.find_element(By.XPATH, "//dt[text() = 'Website']")
+        website_text = engine.find_element(
+            By.XPATH, "//dt[text() = 'Website']")
         sleep(0.5)
 
-        website = website_text.find_element(By.XPATH, 'following-sibling::*[1]').text
+        website = website_text.find_element(
+            By.XPATH, 'following-sibling::*[1]').text
         site = domain_filter(website)
     except Exception as E:
         print("website not found: ", Company_URL)
@@ -191,24 +241,27 @@ def get_industry_and_head_count(engine, Company_URL):
 
     return (head_count, industry_name, site)
 
+
 def request_to_email_finder(first_name, last_name, domain, mongo_id):
     request_body = {
         "first_name": first_name,
         "last_name": last_name,
         "domain": domain,
         "mongo_id": str(mongo_id)
-        }
+    }
 
     url = "http://3.108.35.111:9898/send_employee_details"
     try:
-        requests.post(url= url, json=request_body)
+        requests.post(url=url, json=request_body)
     except Exception as E:
         print(E)
         print("Execption while calling the API Function")
-  
+
+
 def priyam_code(driver, URL):
-    global COLLECTION
-    
+    global COLLECTION, MAX_PROFILE_COUNT
+
+    profile_count = 0
     Company_Dict = dict()
 
     def Wait(xpth):
@@ -217,17 +270,18 @@ def priyam_code(driver, URL):
     driver.get(URL)
     sleep(8)
     i = 0
-    
-    while i<50:
+
+    while i < 50:
         # input("Enter: ")
+        
         try:
-            
-            url=driver.find_element(by=By.XPATH,value=f'/html/body/main/div[1]/div[2]/div[2]/div/ol/li[{i+1}]/div/div/div[2]/div[1]/div[1]/div/div[2]/div[1]/div/a')
-            title = driver.find_elements(by=By.CSS_SELECTOR,value=f'span[data-anonymize="person-name"]')[i].get_attribute('innerText')
+
+            url = driver.find_element(by=By.XPATH, value=f'/html/body/main/div[1]/div[2]/div[2]/div/ol/li[{i+1}]/div/div/div[2]/div[1]/div[1]/div/div[2]/div[1]/div/a')
+            title = driver.find_elements(by=By.CSS_SELECTOR, value=f'span[data-anonymize="person-name"]')[i].get_attribute('innerText')
             title = name_filter(title)
             f_name = title.split(" ")[0]
             l_name = " ".join(title.split(" ")[1:])
-            desn = driver.find_elements(by=By.CSS_SELECTOR,value=f'span[data-anonymize="title"]')[i].get_attribute('innerText')
+            desn = driver.find_elements(by=By.CSS_SELECTOR, value=f'span[data-anonymize="title"]')[i].get_attribute('innerText')
 
             desn = desn.replace(",", "|")
             profile_url = url.get_attribute('href')
@@ -240,18 +294,19 @@ def priyam_code(driver, URL):
                 firm_name = firm_name.replace(",", "|")
                 firm_url = firm.get_attribute("href")
                 firm_url = firm_url.split("?")[0].replace("/sales", "")
-                
+
             except Exception as E:
                 print(E)
                 print("Firm name not found")
-            
+
             try:
                 if firm_url in Company_Dict.keys():
                     head_count, industry, site = Company_Dict[firm_url]
                 else:
-                    Company_Dict[firm_url] = get_industry_and_head_count(driver, firm_url)
+                    Company_Dict[firm_url] = get_industry_and_head_count(
+                        driver, firm_url)
                     head_count, industry, site = Company_Dict[firm_url]
-                    
+
             except Exception as E:
                 head_count = ""
                 industry = ""
@@ -259,30 +314,35 @@ def priyam_code(driver, URL):
                 print("Company Details Not Found", firm_url)
 
             try:
-                location = driver.find_elements(by=By.CSS_SELECTOR, value=f'span[data-anonymize="location"]')[i].get_attribute('innerText')
-                location = location.replace("," , "|")
+                location = driver.find_elements(
+                    by=By.CSS_SELECTOR, value=f'span[data-anonymize="location"]')[i].get_attribute('innerText')
+                location = location.replace(",", "|")
             except Exception as E:
                 print(E)
                 print("location not found")
 
             try:
-                obj = COLLECTION.insert_one({"f_name": f_name, "l_name": l_name, "designation": desn, "profile_url": newProfileUrl, "email": "Not Found", "email_source": "", "location": location, "company_name": firm_name, "company_linkedin_url": firm_url, "company_head_count":head_count, "industry": industry, "company_url": site, "search_url": URL})
+                obj = COLLECTION.insert_one({"f_name": f_name, "l_name": l_name, "designation": desn, "profile_url": newProfileUrl, "email": "Not Found", "email_source": "", "location": location,
+                                            "company_name": firm_name, "company_linkedin_url": firm_url, "company_head_count": head_count, "industry": industry, "company_url": site, "search_url": URL})
             except Exception as E:
                 print(E)
                 print("Error while Inserting data in DB")
 
             try:
+                profile_count += 1
                 email = apollo_code(driver, newProfileUrl)
-                
+
             except Exception as E:
                 print("Apollo Error: ", E)
                 email = "Not Found"
-            
+
             try:
                 if email == "Not Found":
-                    request_to_email_finder(f_name, l_name, site, obj.inserted_id)
+                    request_to_email_finder(
+                        f_name, l_name, site, obj.inserted_id)
                 else:
-                    COLLECTION.update_one({"_id": obj.inserted_id}, {"$set": {"email": email, "email_source": "apollo"}})
+                    COLLECTION.update_one({"_id": obj.inserted_id}, {
+                                          "$set": {"email": email, "email_source": "apollo"}})
                     pass
             except Exception as E:
                 print(E)
@@ -303,31 +363,53 @@ def priyam_code(driver, URL):
             print(e)
             try:
                 print('Page Change')
-                # page+=1☻
-                i=-1
+                if profile_count >= MAX_PROFILE_COUNT:
+                    # Save Current Page URL
+                    save_url = driver.current_url
+
+                    # Logout from Current User
+                    logout(driver)
+
+                    # Login from a different User
+                    login(engine)
+
+                    # Change the page number of the saved page in the url 
+                    new_url = next_page_url(save_url)
+
+                    # Start the entire process using the newly created page URL
+                    priyam_code(driver, new_url)
+
+                    return True
+                i = -1
                 try:
-                    driver.execute_script("window.scrollBy(0, 1000);")  
+                    driver.execute_script("window.scrollBy(0, 1000);")
                     sleep(1)
-                    driver.execute_script("arguments[0].scrollIntoView();", url)
+                    driver.execute_script(
+                        "arguments[0].scrollIntoView();", url)
                 except Exception:
                     pass
-                Wait('/html/body/main/div[1]/div[2]/div[2]/div/div[4]/div/button[2]')
-                driver.find_element(by=By.XPATH,value=f'/html/body/main/div[1]/div[2]/div[2]/div/div[4]/div/button[2]').click()
+                Wait(
+                    '/html/body/main/div[1]/div[2]/div[2]/div/div[4]/div/button[2]')
+                driver.find_element(
+                    by=By.XPATH, value=f'/html/body/main/div[1]/div[2]/div[2]/div/div[4]/div/button[2]').click()
 
             except:
                 pass
-        i+=1
+        i += 1
 
 
 if __name__ == "__main__":
+    
+    get_login_credentials()
 
-    URL_1 = "https://www.linkedin.com/sales/search/people?savedSearchId=1741602674&sessionId=UwGXMekGTFWTc%2F0l%2F1hsVQ%3D%3D&viewAllFilters=true"
+
+    URL_1 = "https://www.linkedin.com/sales/search/people?page=32&query=(spellCorrectionEnabled%3Atrue%2CrecentSearchParam%3A(id%3A2514245881%2CdoLogHistory%3Atrue)%2Cfilters%3AList((type%3ACURRENT_TITLE%2Cvalues%3AList((text%3Alearning%2520and%2520development%2CselectionType%3AINCLUDED)))%2C(type%3ACOMPANY_HEADCOUNT%2Cvalues%3AList((id%3AI%2Ctext%3A10%252C000%252B%2CselectionType%3AINCLUDED)))%2C(type%3AREGION%2Cvalues%3AList((id%3A102221843%2Ctext%3ANorth%2520America%2CselectionType%3AINCLUDED))))%2Ckeywords%3Alearning%2520%2526%2520development)&sessionId=P8mjcRoxTI%2Bys6v0A4iaOQ%3D%3D&viewAllFilters=true"
 
     options = webdriver.ChromeOptions()
     # options.add_argument("--headless")
 
     options.add_experimental_option("debuggerAddress", "localhost:9999")
-    service = Service("/home/lightning_sin_wrath/chromedriver")
+    service = Service(ChromeDriverManager().install())
 
     engine = webdriver.Chrome(service=service, options=options)
     engine.maximize_window()
