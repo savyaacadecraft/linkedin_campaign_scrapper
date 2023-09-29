@@ -398,7 +398,7 @@ def profile_scrapping_main_logic(driver, URL):
                     "search_url": URL,
                     "Scrapped_Time": datetime.now().replace(second=0, microsecond=0)
                     })
-                continue
+                
             except Exception as E:
                 print(E)
                 print("Error while Inserting data in DB")
