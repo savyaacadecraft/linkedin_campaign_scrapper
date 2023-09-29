@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, TimeoutException
 
 from time import sleep
+from datetime import datetime
 from random import randint
 from urllib.parse import quote_plus
 from pymongo import MongoClient
@@ -17,16 +18,18 @@ import requests
 import re
 
 
-username = "manojtomar326"
-password = "Tomar@@##123"
-cluster_url = "cluster0.ldghyxl.mongodb.net"
+# username = "manojtomar326"
+# password = "Tomar@@##123"
+# cluster_url = "cluster0.ldghyxl.mongodb.net"
 
-# Encode the username and password using quote_plus()
-encoded_username = quote_plus(username)
-encoded_password = quote_plus(password)
+# # Encode the username and password using quote_plus()
+# encoded_username = quote_plus(username)
+# encoded_password = quote_plus(password)
 
-# Create the MongoDB Atlas connection string with the encoded credentials
-connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{cluster_url}/test?retryWrites=true&w=majority"
+# # Create the MongoDB Atlas connection string with the encoded credentials
+# connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{cluster_url}/test?retryWrites=true&w=majority"
+
+connection_string = "mongodb://localhost:27017"
 
 # Connect to MongoDB Atlas
 CLIENT = MongoClient(connection_string)
@@ -75,6 +78,63 @@ def next_page_url(url):
     next_page_num = str(int(prev) + 1)
     return url.replace("page="+prev, "page="+next_page_num)
     
+
+def apollo_logout_login(engine):
+
+
+    try:
+        sleep(3)
+        engine.execute_script("window.open('', '_blank');")
+        sleep(2)
+
+        engine.switch_to.window(engine.window_handles[1])
+        sleep(2)
+
+        engine.get("https://app.apollo.io/")
+        sleep(5)
+    except Exception as E:
+        print("Apollo Login Logout::: Page Switch Error")
+
+
+    try:
+        engine.find_element(By.XPATH, "//button[@data-cy='user-profile']").click()
+        sleep(5)
+    except Exception as E:
+        print("Exception Occoured while Clicking Profile Section")
+
+    
+    try:
+        engine.find_element(By.XPATH, "//div[@data-cy='logout']").click()
+        sleep(5)
+    except Exception as E:
+        print("Exception in Apollo while clicking on Logout section in profile dropdown")
+    
+    
+    engine.get("https://app.apollo.io/#/login")
+    sleep(2)
+
+    try:
+        engine.find_element(By.ID, "o7-input").send_keys("singhdivyanshu1207@gmail.com")
+        sleep(0.5)
+    except Exception as E:
+        print("Apollo Login::: User input box not found")
+    
+    try:
+        engine.find_element(By.ID, "current-password").send_keys("Divyanshu@1234")
+        sleep(0.5)
+    except Exception as E:
+        print("Apollo Login::: Pasword Input box not found")
+
+    try:
+        engine.find_element(By.XPATH, "//button[@data-cy='login-button']").click()
+        sleep(5)
+    except Exception as E:
+        print("Apollo Login::: Login Button not found")
+    
+
+    engine.close()
+    engine.switch_to.window(engine.window_handles[0])
+
 
 def login(engine):
     global LINKEDIN_ID_LIST
@@ -127,9 +187,9 @@ def apollo_code(engine, url):
 
     sleep(randint(0, 3))
 
+
     try:
-        WebDriverWait(engine, 2).until(EC.visibility_of_element_located(
-            (By.XPATH, "//a[contains(text(), 'Sign in')]")))
+        WebDriverWait(engine, 2).until(EC.visibility_of_element_located((By.XPATH, "//a[contains(text(), 'Sign in')]")))
         print(datetime.now(), file=open("BLOCK_COUNTER.txt", "a"))
         # engine.save_screenshot(f'{datetime.now().strftime("%Y-%m-%dT%H:%M:%S.png")}')
         engine.close()
@@ -258,7 +318,7 @@ def request_to_email_finder(first_name, last_name, domain, mongo_id):
         print("Execption while calling the API Function")
 
 
-def priyam_code(driver, URL):
+def profile_scrapping_main_logic(driver, URL):
     global COLLECTION, MAX_PROFILE_COUNT
 
     profile_count = 0
@@ -322,8 +382,23 @@ def priyam_code(driver, URL):
                 print("location not found")
 
             try:
-                obj = COLLECTION.insert_one({"f_name": f_name, "l_name": l_name, "designation": desn, "profile_url": newProfileUrl, "email": "Not Found", "email_source": "", "location": location,
-                                            "company_name": firm_name, "company_linkedin_url": firm_url, "company_head_count": head_count, "industry": industry, "company_url": site, "search_url": URL})
+                obj = COLLECTION.insert_one(
+                    {"f_name": f_name, 
+                    "l_name": l_name, 
+                    "designation": desn, 
+                    "profile_url": newProfileUrl, 
+                    "email": "Not Found", 
+                    "email_source": "", 
+                    "location": location,
+                    "company_name": firm_name, 
+                    "company_linkedin_url": firm_url, 
+                    "company_head_count": head_count, 
+                    "industry": industry, 
+                    "company_url": site, 
+                    "search_url": URL,
+                    "Scrapped_Time": datetime.now().replace(second=0, microsecond=0)
+                    })
+                continue
             except Exception as E:
                 print(E)
                 print("Error while Inserting data in DB")
@@ -338,11 +413,9 @@ def priyam_code(driver, URL):
 
             try:
                 if email == "Not Found":
-                    request_to_email_finder(
-                        f_name, l_name, site, obj.inserted_id)
+                    request_to_email_finder(f_name, l_name, site, obj.inserted_id)
                 else:
-                    COLLECTION.update_one({"_id": obj.inserted_id}, {
-                                          "$set": {"email": email, "email_source": "apollo"}})
+                    COLLECTION.update_one({"_id": obj.inserted_id}, {"$set": {"email": email, "email_source": "apollo"}})
                     pass
             except Exception as E:
                 print(E)
@@ -363,6 +436,15 @@ def priyam_code(driver, URL):
             print(e)
             try:
                 print('Page Change')
+
+                if (profile_count % 100 == 0):
+                    
+                    # Logout Existing Apollo ID
+                    # Login New Apollo ID
+                    apollo_logout_login(driver)
+
+                    pass
+
                 if profile_count >= MAX_PROFILE_COUNT:
                     # Save Current Page URL
                     save_url = driver.current_url
@@ -371,7 +453,7 @@ def priyam_code(driver, URL):
                     logout(driver)
 
                     # Login from a different User
-                    login(engine)
+                    login(driver)
 
                     # Change the page number of the saved page in the url 
                     new_url = next_page_url(save_url)
@@ -415,4 +497,4 @@ if __name__ == "__main__":
     engine.maximize_window()
 
     print("Operation Started-----")
-    priyam_code(engine, URL_1)
+    profile_scrapping_main_logic(engine, URL_1)

@@ -9,9 +9,9 @@ def email_operation():
     global RECORD
     DAILY_LIMIT = 1000
 
-    data = COLLECTION.find({"email": False}, {"f_name":1, "l_name":1, "company_url":1}).limit(1)
-
-    if len(data["company_url"]) <= 3: return False
+    data = list(COLLECTION.find({"email": "Not Found"}, {"f_name":1, "l_name":1, "company_url":1}).limit(1))[0]
+    
+    # if len(data["company_url"]) <= 3: return False
     if str(data["_id"]) in RECORD:
         return False
     else:
@@ -57,22 +57,6 @@ DB = CLIENT["LinkedIn_Scrapper"]
 COLLECTION = DB["New"]
 
 
+while True:
+    email_operation()
 
-# for i in range(255):
-#     email_operation()
-
-
-data = COLLECTION.find({"email": False}, {"f_name": 1, "l_name": 1, "company_url": 1})
-record_count = {"Long_Last_Name": 0, "No_Firm_URL": 0, "Valid_False": 0}
-
-for i in data:
-    if (len(i["l_name"].split(" ")) > 1):
-        record_count["Long_Last_Name"] += 1
-    elif (len(i["company_url"]) < 3):
-        record_count["No_Firm_URL"] += 1
-    else:
-        print(i["_id"], i["f_name"], i["l_name"], i["company_url"], sep=" | ")
-
-        record_count["Valid_False"] += 1
-
-print(record_count)
