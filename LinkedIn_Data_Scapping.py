@@ -310,7 +310,7 @@ def request_to_email_finder(first_name, last_name, domain, mongo_id):
         "mongo_id": str(mongo_id)
     }
 
-    url = "http://3.108.35.111:9898/send_employee_details"
+    url = "http://0.0.0.0:9090/send_employee_details"
     try:
         requests.post(url=url, json=request_body)
     except Exception as E:
@@ -321,6 +321,7 @@ def request_to_email_finder(first_name, last_name, domain, mongo_id):
 def profile_scrapping_main_logic(driver, URL):
     global COLLECTION, MAX_PROFILE_COUNT
 
+    APOLLO = False
     profile_count = 0
     Company_Dict = dict()
 
@@ -404,8 +405,11 @@ def profile_scrapping_main_logic(driver, URL):
                 print("Error while Inserting data in DB")
 
             try:
-                profile_count += 1
-                email = apollo_code(driver, newProfileUrl)
+                if APOLLO:
+                    profile_count += 1
+                    email = apollo_code(driver, newProfileUrl)
+                else:
+                    email = "Not Found"
 
             except Exception as E:
                 print("Apollo Error: ", E)
@@ -441,7 +445,9 @@ def profile_scrapping_main_logic(driver, URL):
                     
                     # Logout Existing Apollo ID
                     # Login New Apollo ID
-                    apollo_logout_login(driver)
+                    # apollo_logout_login(driver)
+
+                    APOLLO = False
 
                     pass
 
@@ -484,8 +490,9 @@ if __name__ == "__main__":
     
     get_login_credentials()
 
+    URL_2 = "https://www.linkedin.com/sales/search/people?savedSearchId=1741602306&sessionId=P8mjcRoxTI%2Bys6v0A4iaOQ%3D%3D"
 
-    URL_1 = "https://www.linkedin.com/sales/search/people?page=32&query=(spellCorrectionEnabled%3Atrue%2CrecentSearchParam%3A(id%3A2514245881%2CdoLogHistory%3Atrue)%2Cfilters%3AList((type%3ACURRENT_TITLE%2Cvalues%3AList((text%3Alearning%2520and%2520development%2CselectionType%3AINCLUDED)))%2C(type%3ACOMPANY_HEADCOUNT%2Cvalues%3AList((id%3AI%2Ctext%3A10%252C000%252B%2CselectionType%3AINCLUDED)))%2C(type%3AREGION%2Cvalues%3AList((id%3A102221843%2Ctext%3ANorth%2520America%2CselectionType%3AINCLUDED))))%2Ckeywords%3Alearning%2520%2526%2520development)&sessionId=P8mjcRoxTI%2Bys6v0A4iaOQ%3D%3D&viewAllFilters=true"
+    # URL_1 = "https://www.linkedin.com/sales/search/people?page=32&query=(spellCorrectionEnabled%3Atrue%2CrecentSearchParam%3A(id%3A2514245881%2CdoLogHistory%3Atrue)%2Cfilters%3AList((type%3ACURRENT_TITLE%2Cvalues%3AList((text%3Alearning%2520and%2520development%2CselectionType%3AINCLUDED)))%2C(type%3ACOMPANY_HEADCOUNT%2Cvalues%3AList((id%3AI%2Ctext%3A10%252C000%252B%2CselectionType%3AINCLUDED)))%2C(type%3AREGION%2Cvalues%3AList((id%3A102221843%2Ctext%3ANorth%2520America%2CselectionType%3AINCLUDED))))%2Ckeywords%3Alearning%2520%2526%2520development)&sessionId=P8mjcRoxTI%2Bys6v0A4iaOQ%3D%3D&viewAllFilters=true"
 
     options = webdriver.ChromeOptions()
     # options.add_argument("--headless")
@@ -497,4 +504,4 @@ if __name__ == "__main__":
     engine.maximize_window()
 
     print("Operation Started-----")
-    profile_scrapping_main_logic(engine, URL_1)
+    profile_scrapping_main_logic(engine, URL_2)
