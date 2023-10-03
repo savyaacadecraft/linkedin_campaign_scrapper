@@ -54,18 +54,18 @@ def verifying2(recipient_email, id_num):
     except HttpError as error:
         
         if "Invalid To header" in str(error):
-            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "HTTP 400 --- ", to, f"FROM ID => {id_num}")
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}", "HTTP 400 --- ", to, f"FROM ID => {id_num}")
         else:
-            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "---", error, f"FROM ID => {id_num}")
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}", "---", error, f"FROM ID => {id_num}")
         return False
     
     except Exception as E:
 
         if 'invalid_grant: Bad Request' in str(E):
-            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "400 :::: ", to, f"FROM ID= > {id_num}")
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}", "400 :::: ", to, f"FROM ID= > {id_num}")
 
         else:
-            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "___> ", E, f"FROM ID= > {id_num}")
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}", "___> ", E, f"FROM ID= > {id_num}")
         return False
     
     add(1)

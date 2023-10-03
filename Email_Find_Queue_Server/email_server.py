@@ -8,8 +8,7 @@ from urllib.parse import quote_plus
 from bson import ObjectId
 
 from threading import Thread, Lock
-from time import sleep
-import time
+from time import sleep, time
 from validate_email_own import PatternCheck
 
 
@@ -52,7 +51,7 @@ class emp_details(BaseModel):
 def verify_email(f_name, l_name, site, user_id, ID):
     global COLLECTION, ID_LIST, ID_LOCK, ID_RECORD, ID_RECORD_LOCK
 
-    printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))} ", f_name, l_name, site, user_id, ID)
+    printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time()))} ", f_name, l_name, site, user_id, ID)
 
     try:
         _, email, counter = PatternCheck(first_name=f_name, last_name=l_name, domain=site, _idnum=ID)
@@ -71,10 +70,10 @@ def verify_email(f_name, l_name, site, user_id, ID):
 
     if email:
         COLLECTION.update_one({"_id": ObjectId(user_id)}, {"$set": {"email": email, "verification": True}})
-        printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))} | verification - True | id: {user_id}  |  EMAIL_ID ::: {ID}")
+        printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time()))} | verification - True | id: {user_id}  |  EMAIL_ID ::: {ID}")
     else:
         COLLECTION.update_one({"_id": ObjectId(user_id)}, {"$set": {"email": email, "verification": False}})
-        printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))} | verification - False | id: {user_id}  |  EMAIL_ID ::: {ID}")
+        printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time()))} | verification - False | id: {user_id}  |  EMAIL_ID ::: {ID}")
 
 
 def email_operation():
@@ -153,4 +152,4 @@ if __name__ == "__main__":
 
     Thread(target=email_operation).start()
 
-    run(app, host="0.0.0.0", port=9090)
+    run(app, host="0.0.0.0", port=9898)

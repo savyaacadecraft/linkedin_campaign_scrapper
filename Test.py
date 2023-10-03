@@ -13,7 +13,7 @@ def request_to_email_finder(first_name, last_name, domain, mongo_id):
         "mongo_id": str(mongo_id)
     }
 
-    url = "http://3.108.35.111:9898/send_employee_details"
+    url = "http://0.0.0.0:9090/send_employee_details"
     try:
         post(url=url, json=request_body)
     except Exception as E:
@@ -40,12 +40,12 @@ if Server == "prod":
     # URL = "search/people?query=(spellCorrectionEnabled%3Atrue%2CrecentSearchParam%3A(id%3A2514245881%2CdoLogHistory%3Atrue)%2Cfilters%3AList((type%3ACURRENT_TITLE%2Cvalues%3AList((text%3Alearning%2520and%2520development%2CselectionType%3AINCLUDED)))%2C(type%3ACOMPANY_HEADCOUNT%2Cvalues%3AList((id%3AI%2Ctext%3A10%252C000%252B%2CselectionType%3AINCLUDED)))%2C(type%3AREGION%2Cvalues%3AList((id%3A102221843%2Ctext%3ANorth%2520America%2CselectionType%3AINCLUDED))))%2Ckeywords%3Alearning%2520%2526%2520development)&sessionId=P8mjcRoxTI%2Bys6v0A4iaOQ%3D%3D&viewAllFilters=true"
 
 
-if Server == "dev":
+# if Server == "dev":
 
-    CLIENT = MongoClient("mongodb://localhost:27017")
-    DB = CLIENT["LinkedIn_Scrapper"]
-    COLLECTION = DB["New"]
-    URL = "search/people?savedSearchId=1741602674&sessionId=UwGXMekGTFWTc%2F0l%2F1hsVQ%3D%3D&viewAllFilters=true"
+#     CLIENT = MongoClient("mongodb://localhost:27017")
+#     DB = CLIENT["LinkedIn_Scrapper"]
+#     COLLECTION = DB["New"]
+#     URL = "search/people?savedSearchId=1741602674&sessionId=UwGXMekGTFWTc%2F0l%2F1hsVQ%3D%3D&viewAllFilters=true"
 
 
 
@@ -55,7 +55,7 @@ for i in data:
     try:
         print(i["fname"], i["lname"], i["domain"], i["_id"])
         request_to_email_finder(i["fname"], i["lname"], i["domain"], i["_id"])
-        sleep(2)
+        sleep(1)
     except KeyboardInterrupt:
         break
 
