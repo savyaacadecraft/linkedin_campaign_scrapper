@@ -54,18 +54,18 @@ def verifying2(recipient_email, id_num):
     except HttpError as error:
         
         if "Invalid To header" in str(error):
-            printf("HTTP 400 --- ", to)
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "HTTP 400 --- ", to, f"FROM ID => {id_num}")
         else:
-            printf("---", error)
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "---", error, f"FROM ID => {id_num}")
         return False
     
     except Exception as E:
 
         if 'invalid_grant: Bad Request' in str(E):
-            printf("400 :::: ", to)
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "400 :::: ", to, f"FROM ID= > {id_num}")
 
         else:
-            printf("___> ", E)
+            printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))}", "___> ", E, f"FROM ID= > {id_num}")
         return False
     
     add(1)
@@ -79,8 +79,8 @@ def receive(recipient_email, count, id_num):
     if count == 0:
         current_time = time.time()
         # Convert the current time to a human-readable format
-        formatted_time = time.strftime('%H:%M:%S', time.localtime(current_time))
-        printf(f"{recipient_email}: EXIST {formatted_time}\n")
+        formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))
+        printf(f"{recipient_email}: EXIST {formatted_time} FROM ID:::: {id_num}")
         return True
     
     SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
@@ -128,20 +128,21 @@ def receive(recipient_email, count, id_num):
             if content.splitlines()[0:1][0] == "" or content.splitlines()[0:1][0] == "\n" or content.splitlines()[0:1][0] == " ":
                 pass
             else:
-                printf(content.splitlines()[0:1][0])
-            if "You have reached a limit for sending mail" in content:
+                # printf(content.splitlines()[0:1][0], f" FROM ID=== {id_num}")
+                pass
+            if "You have reached a limit for sending mail" in str(content):
                 # printf("You have reached a limit for sending mail. Your message was not sent.")
                 raise Exception("You have reached a limit for sending mail. Your message was not sent.")
             if mnEmail in content:
                 current_time = time.time()
                 # Convert the current time to a human-readable format
-                formatted_time = time.strftime('%H:%M:%S', time.localtime(current_time))
-                printf(f'{mnEmail} == Not EXIST {formatted_time}\n')
+                formatted_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))
+                printf(f'{mnEmail} == Not EXIST {formatted_time} FROM ID==> {id_num}')
                 return False
             else:
                 return receive(recipient_email, count-1, id_num)
     except HttpError as error:
-        printf('An error occurred: %s' % error)
+        printf('An error occurred: %s' % error, f"FROM ID==> {id_num}")
 
 def getVars(index):
     data = []
@@ -176,7 +177,7 @@ def PatternCheck(first_name, last_name, domain,_idnum):
             
         except Exception as e:
             printf(sys.exc_info()[0].__traceback__, e)
-            raise Exception("Email Verification Error")
+            raise Exception("Email Verification Error", str(e))
         
         print(ID_COUNTER, file=open("credentials_log.txt", "w"))
     return (None, None, ID_COUNTER[_idnum])

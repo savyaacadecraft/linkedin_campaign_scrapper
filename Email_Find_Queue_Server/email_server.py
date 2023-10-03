@@ -9,6 +9,7 @@ from bson import ObjectId
 
 from threading import Thread, Lock
 from time import sleep
+import time
 from validate_email_own import PatternCheck
 
 
@@ -35,8 +36,8 @@ connection_string = f"mongodb+srv://{encoded_username}:{encoded_password}@{clust
 
 # connection_string = "mongodb://localhost:27017/"
 CLIENT = MongoClient(connection_string)
-DB = CLIENT["mydatabase"]
-COLLECTION = DB["Employee_Collection"]
+DB = CLIENT["LinkedIn_Scrapper"]
+COLLECTION = DB["New"]
 
 def printf(*args):
     print(*args, file=open("Email_Server.txt", "a"))
@@ -51,12 +52,13 @@ class emp_details(BaseModel):
 def verify_email(f_name, l_name, site, user_id, ID):
     global COLLECTION, ID_LIST, ID_LOCK, ID_RECORD, ID_RECORD_LOCK
 
-    printf(f_name, l_name, site, user_id, ID)
+    printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))} ", f_name, l_name, site, user_id, ID)
 
     try:
         _, email, counter = PatternCheck(first_name=f_name, last_name=l_name, domain=site, _idnum=ID)
     except Exception as E:
         printf(E)
+        counter = 0
         email = None
     
     ID_RECORD_LOCK.acquire()
@@ -69,8 +71,10 @@ def verify_email(f_name, l_name, site, user_id, ID):
 
     if email:
         COLLECTION.update_one({"_id": ObjectId(user_id)}, {"$set": {"email": email, "verification": True}})
+        printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))} | verification - True | id: {user_id}  |  EMAIL_ID ::: {ID}")
     else:
         COLLECTION.update_one({"_id": ObjectId(user_id)}, {"$set": {"email": email, "verification": False}})
+        printf(f"TIME:: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))} | verification - False | id: {user_id}  |  EMAIL_ID ::: {ID}")
 
 
 def email_operation():
@@ -119,19 +123,19 @@ async def push_to_email_queue(details: emp_details):
         return {"response": "Failed"}
 
 
-# @app.get("/get_all_data")
-# async def get_url_data(URL: str):
+@app.get("/get_all_data")
+async def get_url_data(URL: str):
 
-#     data = COLLECTION.find({"$text": {"$search": URL}}, {"_id": 0, "f_name":1, "l_name":1, "designation":1, "email":1,"location":1, "company_name":1, "company_head_count":1, "industry": 1, "company_url":1})
-#     cols = ["first_name", "last_name", "designation", "email", "location", "company_name", "head_count", "industry", "company_url"]
-#     printf(", ".join(cols), file=open("Data.csv", "w"))
+    data = COLLECTION.find({"$text": {"$search": URL}}, {"_id": 0, "f_name":1, "l_name":1, "designation":1, "email":1,"location":1, "company_name":1, "company_head_count":1, "industry": 1, "company_url":1})
+    cols = ["first_name", "last_name", "designation", "email", "location", "company_name", "head_count", "industry", "company_url"]
+    print(", ".join(cols), file=open("Data.csv", "w"))
     
 
-#     for i in data:
-#         printf(i["f_name"], i["l_name"], i["designation"], i["email"], i["location"], i["company_name"], i["company_head_count"], i["industry"], i["company_url"], sep=", ",  file=open("Data.csv", "a"))
+    for i in data:
+        print(i["f_name"], i["l_name"], i["designation"], i["email"], i["location"], i["company_name"], i["company_head_count"], i["industry"], i["company_url"], sep=", ",  file=open("Data.csv", "a"))
 
     
-#     return FileResponse("Data.csv", filename="Data.csv")
+    return FileResponse("Data.csv", filename="Data.csv")
     
 
 if __name__ == "__main__":
