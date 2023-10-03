@@ -13,7 +13,7 @@ def request_to_email_finder(first_name, last_name, domain, mongo_id):
         "mongo_id": str(mongo_id)
     }
 
-    url = "http://0.0.0.0:9090/send_employee_details"
+    url = "http://3.108.35.111:9898/send_employee_details"
     try:
         post(url=url, json=request_body)
     except Exception as E:
